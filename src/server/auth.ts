@@ -1,11 +1,12 @@
+import { env } from "@/env.mjs";
 import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
-  type NextAuthOptions,
   type DefaultSession,
+  type NextAuthOptions,
 } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
-import { env } from "@/env.mjs";
+import { type DefaultJWT } from "next-auth/jwt";
+import GithubProvider from "next-auth/providers/github";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -15,11 +16,18 @@ import { env } from "@/env.mjs";
  */
 declare module "next-auth" {
   interface Session extends DefaultSession {
+    accessToken: string;
     user: {
       id: string;
+      login?: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
+  }
+
+  interface Profile {
+    login?: string;
+    avatar_url?: string;
   }
 
   // interface User {
@@ -28,25 +36,46 @@ declare module "next-auth" {
   // }
 }
 
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    accessToken: string;
+    login?: string;
+    picture?: string;
+  }
+}
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  pages: {
+    signIn: "/auth/signin",
+  },
   callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-        // session.user.role = user.role; <-- put other properties on the session here
+    jwt({ token, account, profile }) {
+      if (account) {
+        token.accessToken = account.access_token || "";
+        token.login = profile?.login;
+        token.picture = profile?.avatar_url;
       }
+
+      return token;
+    },
+    session({ session, token }) {
+      session.accessToken = token.accessToken;
+      session.user.login = token.login;
+      session.user.image = token.picture;
+
       return session;
     },
   },
   providers: [
-    DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
+    GithubProvider({
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
+      authorization: { params: { scope: "repo" } },
     }),
     /**
      * ...add more providers here.
