@@ -1,15 +1,35 @@
 import IssueList from "@/components/IssueList";
-import { Navbar } from "@/components/Navbar";
+import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 
-interface IssueApi {
-  body: string;
-  status: string;
-}
+import { Layout } from "@/layouts/Layout";
+import { createIssue } from "@/service/github-api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-export default function CamperVanPage() {
+const createSchema = z.object({
+  title: z.string().min(1).max(100),
+  body: z.string().min(1).max(1000),
+});
+
+type CreateSchema = z.infer<typeof createSchema>;
+
+const Home: NextPage = () => {
   const { data: session, status } = useSession();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateSchema>({
+    resolver: zodResolver(createSchema),
+  });
+
+  const createSubmitHandler = async (data: CreateSchema) => {
+    await createIssue(data);
+  };
 
   if (status === "loading") {
     return <p>Hang on there...</p>;
@@ -18,7 +38,6 @@ export default function CamperVanPage() {
   if (status === "unauthenticated") {
     return (
       <>
-        <Navbar />
         <p>Not signed in.</p>
         <button onClick={() => void signIn("github")}>Sign in</button>
       </>
@@ -33,18 +52,38 @@ export default function CamperVanPage() {
   const userPicture = session.user.image;
 
   return (
-    <>
-      <Navbar />
-      <div className="max-h-10"></div>
+    <Layout>
+      <form
+        className="gap-4"
+        onSubmit={(e) => void handleSubmit(createSubmitHandler)(e)}
+      >
+        <fieldset>
+          <label htmlFor="title" className="block">
+            Title
+          </label>
+          <input {...register("title")} className="rounded-lg border" />
+          {errors.title && <p>{errors.title.message}</p>}
+        </fieldset>
+        <fieldset>
+          <label htmlFor="body" className="block">
+            Body
+          </label>
+          <textarea
+            {...register("body")}
+            className="resize-none rounded-lg border"
+          />
+          {errors.body && <p>{errors.body.message}</p>}
+        </fieldset>
+        <button>Create Issue</button>
+      </form>
       <p>Signed in as {userName}</p>
       <Image src={userPicture || ""} alt="you" width={50} height={50} />
       <div>
         <button onClick={() => void signOut()}>Sign out</button>
       </div>
-      <IssueList accessToken={session.accessToken} filter="all" />
-      {/* <div>
-        <button onClick={() => void fetcher()}>Log Token</button>
-      </div> */}
-    </>
+      <IssueList />
+    </Layout>
   );
-}
+};
+
+export default Home;
