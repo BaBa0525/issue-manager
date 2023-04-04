@@ -1,32 +1,16 @@
-import { MockApiFetcher } from "@/service/github-api";
-import { type GithubApi } from "@/types/api";
+import { getIssue } from "@/service/github-api";
+import { type Issue } from "@/types/issue";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useState, type FC } from "react";
+import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import ReactMarkdown from "react-markdown";
 
-type Issues = {
-  id: string;
-  title: string;
-  body: string;
-  label: string[];
-};
-
-type MyOmit<TObj, Key extends keyof TObj> = Omit<TObj, Key>;
-type IssueListProp = Omit<GithubApi, "pageNumber">;
-type IssueListProp2 = MyOmit<GithubApi, "pageNumber">;
-
-const IssueList: FC<IssueListProp> = ({ accessToken, filter }) => {
+const IssueList: React.FC = () => {
   const [expandedIssue, setExpandedIssue] = useState("");
-  // const issuesRes = useQuery<Issues[]>({
-  //   queryKey: [filter, accessToken],
-  //   queryFn: () => githubApiFetcher({ filter, accessToken }),
-  // });
 
-  const issuesRes = useInfiniteQuery<Issues[]>({
-    queryKey: [accessToken],
-    queryFn: ({ pageParam = 0 }) =>
-      MockApiFetcher({ accessToken, pageNumber: pageParam as number, filter }),
+  const issuesRes = useInfiniteQuery<Issue[]>({
+    queryKey: [],
+    queryFn: ({ pageParam = 1 }) => getIssue({ page: pageParam as number }),
     getNextPageParam: (lastPage, page) => {
       if (lastPage.length < 10) return undefined;
       return page.length + 1;
