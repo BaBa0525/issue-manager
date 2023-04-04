@@ -4,6 +4,15 @@ export type GithubApi = {
   pageNumber: number;
 };
 
+export type GetIssue = {
+  page: number;
+};
+
+export type CreateIssue = {
+  title: string;
+  body: string;
+};
+
 export type MockApi = {
   filter: "all";
 };
