@@ -1,8 +1,19 @@
-import { type AppType } from "next/app";
+import { Roboto_Mono } from "@next/font/google";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
+import { type AppType } from "next/app";
 
 import "@/styles/globals.css";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const roboto_mono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
+  display: "swap",
+});
+
+const queryClient = new QueryClient();
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -10,7 +21,12 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      <Component {...pageProps} />
+      <QueryClientProvider client={queryClient}>
+        <main className={roboto_mono.variable}>
+          <Component {...pageProps} className={`${roboto_mono.variable}`} />
+        </main>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </SessionProvider>
   );
 };
