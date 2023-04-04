@@ -1,45 +1,50 @@
-import { type GithubApi } from "@/types/api";
+import { type CreateIssue, type GetIssue } from "@/types/api";
+import { type Issue } from "@/types/issue";
+import { getSession } from "next-auth/react";
+import { githubApi } from "./base";
 
-export const githubApiFetcher = async ({ filter, accessToken }: GithubApi) => {
-  const searchParam = new URLSearchParams({ filter });
+export const createIssue = async ({ title, body }: CreateIssue) => {
+  const session = await getSession();
+  if (!session) {
+    throw Error("Not authenticated");
+  }
 
-  const response = await fetch(
-    `https://api.github.com/issues?${searchParam.toString()}`,
-    {
-      headers: {
-        accept: "application/vnd.github+json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
+  const response = await githubApi.post(
+    "/issues",
+    { title, body },
+    { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
-  if (!response.ok) {
+
+  if (!response.data) {
     throw Error(`API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  console.log(response.data);
 };
 
-export const MockApiFetcher = async ({
-  accessToken,
-  pageNumber = 1,
-}: GithubApi) => {
+export const getIssue = async ({ page = 1 }: GetIssue) => {
+  const session = await getSession();
+  if (!session) {
+    throw Error("Not authenticated");
+  }
+
   const searchParam = new URLSearchParams({
     per_page: "10",
-    page: pageNumber.toString(),
+    page: page.toString(),
   });
 
-  const response = await fetch(
-    `https://api.github.com/repos/vercel/next.js/issues?${searchParam.toString()}`,
+  const response = await githubApi.get<Issue[]>(
+    `/issues?${searchParam.toString()}`,
     {
-      headers: {
-        accept: "application/vnd.github+json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${session.accessToken}` },
     }
   );
-  if (!response.ok) {
+
+  if (!response.data) {
     throw Error(`API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  console.log(response.data);
+
+  return response.data;
 };
