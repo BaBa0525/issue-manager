@@ -22,9 +22,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
-        <main className={roboto_mono.variable}>
-          <Component {...pageProps} className={`${roboto_mono.variable}`} />
-        </main>
+        <div className={roboto_mono.variable}>
+          <Component {...pageProps} />
+        </div>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </SessionProvider>
