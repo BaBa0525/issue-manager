@@ -34,7 +34,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
               </span>
             </div>
 
-            <ReactMarkdown className="prose lg:prose-lg">
+            <ReactMarkdown className="whitespace- prose break-words lg:prose-lg">
               {issue.body}
             </ReactMarkdown>
           </div>

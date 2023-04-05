@@ -57,8 +57,11 @@ export const authOptions: NextAuthOptions = {
     jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token || "";
+      }
+      if (profile) {
         token.login = profile?.login;
         token.picture = profile?.avatar_url;
+        token.email = profile?.email;
       }
 
       return token;
@@ -67,6 +70,7 @@ export const authOptions: NextAuthOptions = {
       session.accessToken = token.accessToken;
       session.user.login = token.login;
       session.user.image = token.picture;
+      session.user.email = token.email;
 
       return session;
     },

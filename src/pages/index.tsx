@@ -1,76 +1,49 @@
-import IssueList from "@/components/IssueList";
 import { type NextPage } from "next";
-import { signIn, signOut, useSession } from "next-auth/react";
-import Image from "next/image";
+import { signIn, useSession } from "next-auth/react";
 
+import { CreateIssueForm } from "@/components/CreateIssueForm";
+import { IssueCard } from "@/components/IssueCard";
+import { useLazy } from "@/hooks/useLazy";
 import { Layout } from "@/layouts/Layout";
-import { createIssue } from "@/service/github-api";
+import { getIssue } from "@/service/github-api";
 import { type Issue } from "@/types/issue";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useMutation,
-  useQueryClient,
-  type InfiniteData,
-} from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { AiOutlineSearch } from "react-icons/ai";
+import InfiniteScroll from "react-infinite-scroll-component";
 
-const createSchema = z.object({
-  title: z.string().min(1).max(100),
-  body: z.string().min(1).max(1000),
-});
+const filters = ["all", "open", "in progress", "done"] as const;
+type Filter = (typeof filters)[number];
 
-type CreateSchema = z.infer<typeof createSchema>;
+const labelFilter = (filter: Filter, issues: Issue[]) => {
+  if (filter === "all") return issues;
+  return issues.filter((issue) => {
+    return issue.label === filter;
+  });
+};
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateSchema>({
-    resolver: zodResolver(createSchema),
+  const [query, setQuery] = useState("");
+  const lazy = useLazy(500);
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [filter, setFilter] = useState<Filter>("all");
+  const getIssueQuery = useInfiniteQuery({
+    queryKey: ["issues", query, order, filter],
+    queryFn: ({ pageParam = 1 }) =>
+      getIssue({
+        page: pageParam as number,
+        query,
+        order,
+        label: filter,
+      }),
+    getNextPageParam: (lastPage, page) => {
+      if (lastPage.length < 10) return undefined;
+      return page.length + 1;
+    },
+    refetchOnMount: false,
+    keepPreviousData: true,
   });
-
-  const queryClient = useQueryClient();
-
-  const createIssueMutation = useMutation({
-    mutationFn: createIssue,
-    onMutate: async () => {
-      await queryClient.cancelQueries(["issues"]);
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-      ]);
-
-      return { previousIssues };
-    },
-    onError: (err, newIssue, context) => {
-      queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
-      // TODO: Alert something
-    },
-    onSuccess: ({ newIssue }) => {
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-      ]);
-
-      queryClient.setQueryData(["issues"], {
-        ...previousIssues,
-        pages: previousIssues?.pages?.map((page, index) => {
-          if (index !== 0) {
-            return page;
-          }
-          return [newIssue, ...page];
-        }) ?? [[newIssue]],
-      });
-    },
-  });
-
-  const createSubmitHandler = async (data: CreateSchema) => {
-    await createIssueMutation.mutateAsync(data);
-    reset();
-  };
 
   if (status === "loading") {
     return <p>Hang on there...</p>;
@@ -89,40 +62,76 @@ const Home: NextPage = () => {
     return <>Fail to get session</>;
   }
 
-  const userName = session.user.login;
-  const userPicture = session.user.image;
+  if (getIssueQuery.isLoading) {
+    return <>Loading...</>;
+  }
+
+  if (getIssueQuery.isError) {
+    return <>Error occurred</>;
+  }
+
+  const issues = labelFilter(filter, getIssueQuery.data.pages.flat());
 
   return (
     <Layout>
-      <form
-        className="gap-4"
-        onSubmit={(e) => void handleSubmit(createSubmitHandler)(e)}
-      >
-        <fieldset>
-          <label htmlFor="title" className="block">
-            Title
-          </label>
-          <input {...register("title")} className="rounded-lg border" />
-          {errors.title && <p>{errors.title.message}</p>}
-        </fieldset>
-        <fieldset>
-          <label htmlFor="body" className="block">
-            Body
-          </label>
-          <textarea
-            {...register("body")}
-            className="resize-none rounded-lg border"
+      <div className="mt-16 w-4/5 max-w-4xl px-12">
+        <div className="flex h-12 flex-auto items-center gap-4 rounded-full bg-gray-200/90 px-4">
+          <AiOutlineSearch className="h-full" />
+          <input
+            onChange={(e) => lazy(() => setQuery(e.target.value))}
+            className="h-full flex-auto bg-transparent outline-none"
           />
-          {errors.body && <p>{errors.body.message}</p>}
-        </fieldset>
-        <button>Create Issue</button>
-      </form>
-      <p>Signed in as {userName}</p>
-      <Image src={userPicture || ""} alt="you" width={50} height={50} />
-      <div>
-        <button onClick={() => void signOut()}>Sign out</button>
+        </div>
+        <div className="my-2 flex w-full justify-between">
+          <div>
+            <h3>Label filter</h3>
+            <select
+              onChange={(e) => setFilter(e.target.value as Filter)}
+              value={filter}
+            >
+              {filters.map((filter) => {
+                return (
+                  <option value={filter} key={filter}>
+                    {filter}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div>
+            <button
+              className="rounded-full bg-black px-4 py-1 text-white"
+              onClick={() => {
+                setOrder((prev) => {
+                  if (prev === "asc") return "desc";
+                  return "asc";
+                });
+              }}
+            >
+              {`time ${order}ending`}
+            </button>
+          </div>
+        </div>
+        <CreateIssueForm setFilter={setFilter} setOrder={setOrder} />
+
+        <InfiniteScroll
+          dataLength={issues.length}
+          next={getIssueQuery.fetchNextPage}
+          hasMore={getIssueQuery.hasNextPage ?? false}
+          loader={<h4>Loading...</h4>}
+          endMessage={
+            <p className="text-center">
+              <b>Yay! You have seen it all</b>
+            </p>
+          }
+        >
+          <ul>
+            {issues.map((issue) => {
+              return <IssueCard issue={issue} key={issue.number} />;
+            })}
+          </ul>
+        </InfiniteScroll>
       </div>
-      <IssueList />
     </Layout>
   );
 };

@@ -1,3 +1,4 @@
+import { env } from "@/env.mjs";
 import {
   type CreateIssue,
   type DeleteIssue,
@@ -46,14 +47,31 @@ export const getIssue = async ({
   page = 1,
   query = "",
   order = "desc",
+  label = "all",
 }: GetIssue) => {
   const session = await getSession();
   if (!session) {
     throw Error("Not authenticated");
   }
 
+  console.log(label);
+
+  const q =
+    label === "all"
+      ? [
+          `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
+          "state:open",
+          query,
+        ].join(" ")
+      : [
+          `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
+          "state:open",
+          `label:${label}`,
+          query,
+        ].join(" ");
+
   const searchParam = new URLSearchParams({
-    q: ["repo:BaBa0525/issue-manager", "state:open", query].join(" "),
+    q,
     per_page: "10",
     page: page.toString(),
     order,

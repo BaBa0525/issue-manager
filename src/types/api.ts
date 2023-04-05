@@ -1,13 +1,8 @@
-export type GithubApi = {
-  filter: "all";
-  accessToken: string;
-  pageNumber: number;
-};
-
 export type GetIssue = {
   page: number;
-  query: string;
-  order: "asc" | "desc";
+  query?: string;
+  order?: "asc" | "desc";
+  label?: "open" | "in progress" | "done" | "all";
 };
 
 export type CreateIssue = {
@@ -24,8 +19,4 @@ export type UpdateIssue = {
 
 export type DeleteIssue = {
   issue_number: string;
-};
-
-export type MockApi = {
-  filter: "all";
 };

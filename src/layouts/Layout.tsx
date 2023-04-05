@@ -12,7 +12,7 @@ export const Layout: React.FC<PropsWithChildren> = ({ children }) => {
       </Head>
       <main className="bg-primary-bg">
         <Navbar />
-        <div className="flex flex-col items-center pt-12">{children}</div>
+        <div className="flex flex-col items-center pt-16">{children}</div>
       </main>
     </>
   );
