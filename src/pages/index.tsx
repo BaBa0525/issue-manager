@@ -5,7 +5,13 @@ import Image from "next/image";
 
 import { Layout } from "@/layouts/Layout";
 import { createIssue } from "@/service/github-api";
+import { type Issue } from "@/types/issue";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -27,8 +33,36 @@ const Home: NextPage = () => {
     resolver: zodResolver(createSchema),
   });
 
+  const queryClient = useQueryClient();
+
+  const createIssueMutation = useMutation({
+    mutationFn: createIssue,
+    onMutate: async ({ body, title }) => {
+      await queryClient.cancelQueries(["issues"]);
+      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
+        "issues",
+      ]);
+
+      const newIssue = { body, title, id: crypto.randomUUID() };
+      queryClient.setQueryData(["issues"], {
+        ...previousIssues,
+        pages: previousIssues?.pages?.map((page, index) => {
+          if (index !== 0) {
+            return page;
+          }
+          return [newIssue, ...page];
+        }) ?? [[newIssue]],
+      });
+
+      return { previousIssues };
+    },
+    onError: (err, newIssue, context) => {
+      queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
+    },
+  });
+
   const createSubmitHandler = async (data: CreateSchema) => {
-    await createIssue(data);
+    await createIssueMutation.mutateAsync(data);
   };
 
   if (status === "loading") {
