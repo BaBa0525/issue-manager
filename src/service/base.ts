@@ -1,7 +1,8 @@
+import { env } from "@/env.mjs";
 import axios from "axios";
 
 export const githubApi = axios.create({
-  baseURL: "https://api.github.com/repos/BaBa0525/issue-manager",
+  baseURL: `https://api.github.com/repos/${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}}`,
   headers: {
     accept: "application/vnd.github+json",
   },
