@@ -8,6 +8,9 @@ module.exports = {
     extend: {
       colors: {
         navbar: "#0269a6",
+        primary: {
+          bg: "#f8fafc",
+        },
       },
       fontFamily: {
         "roboto-mono": ["var(--font-roboto-mono)", ...fontFamily.mono],
