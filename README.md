@@ -1,15 +1,10 @@
-
 # Issue Manager
 
 Help you manage issues
 
-
-
-
 ## Demo
 
-Insert gif or link to demo
-
+https://issue-manager-baba0525.vercel.app/
 
 ## Run Locally
 
@@ -31,9 +26,26 @@ Install dependencies
   pnpm install
 ```
 
+Set environment variables in `.env` file
+
+```bash
+  cp .env.example .env
+```
+
+and manually add the following environment variables in `.env`
+
+`GITHUB_CLIENT_ID`
+
+`GITHUB_CLIENT_SECRET`
+
 Start the server
 
 ```bash
   pnpm dev
 ```
 
+## Tech Stack
+
+- [TypeScript](https://www.typescriptlang.org/)
+- [Next.js](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
