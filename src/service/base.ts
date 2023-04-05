@@ -6,3 +6,10 @@ export const githubApi = axios.create({
     accept: "application/vnd.github+json",
   },
 });
+
+export const githubSearchApi = axios.create({
+  baseURL: "https://api.github.com/search",
+  headers: {
+    accept: "application/vnd.github+json",
+  },
+});

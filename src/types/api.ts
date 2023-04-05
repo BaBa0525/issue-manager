@@ -6,6 +6,8 @@ export type GithubApi = {
 
 export type GetIssue = {
   page: number;
+  query: string;
+  order: "asc" | "desc";
 };
 
 export type CreateIssue = {

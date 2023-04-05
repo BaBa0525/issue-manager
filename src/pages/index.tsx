@@ -38,27 +38,17 @@ const Home: NextPage = () => {
 
   const createIssueMutation = useMutation({
     mutationFn: createIssue,
-    onMutate: async ({ body, title }) => {
+    onMutate: async () => {
       await queryClient.cancelQueries(["issues"]);
       const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
         "issues",
       ]);
 
-      // const newIssue = { body, title, id: crypto.randomUUID() };
-      // queryClient.setQueryData(["issues"], {
-      //   ...previousIssues,
-      //   pages: previousIssues?.pages?.map((page, index) => {
-      //     if (index !== 0) {
-      //       return page;
-      //     }
-      //     return [newIssue, ...page];
-      //   }) ?? [[newIssue]],
-      // });
-
       return { previousIssues };
     },
     onError: (err, newIssue, context) => {
       queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
+      // TODO: Alert something
     },
     onSuccess: ({ newIssue }) => {
       const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([

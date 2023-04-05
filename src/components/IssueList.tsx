@@ -1,18 +1,46 @@
 import { getIssue } from "@/service/github-api";
-import { type Issue } from "@/types/issue";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { IssueCard } from "./IssueCard";
 
+const useLazy = (delayInMs: number) => {
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>();
+
+  return (callback: () => void) => {
+    if (timeoutRef.current != undefined) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback();
+      timeoutRef.current == undefined;
+    }, delayInMs);
+  };
+};
+
+const filters = ["all", "open", "in progress", "done"] as const;
+type Filter = (typeof filters)[number];
+
 const IssueList: React.FC = () => {
-  const getIssueQuery = useInfiniteQuery<Issue[]>({
-    queryKey: ["issues"],
-    queryFn: ({ pageParam = 1 }) => getIssue({ page: pageParam as number }),
+  const [query, setQuery] = useState("");
+  const lazy = useLazy(500);
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [filter, setFilter] = useState<Filter>("all");
+  const getIssueQuery = useInfiniteQuery({
+    queryKey: ["issues", query, order],
+    queryFn: ({ pageParam = 1 }) =>
+      getIssue({
+        page: pageParam as number,
+        query,
+        order,
+      }),
     getNextPageParam: (lastPage, page) => {
       if (lastPage.length < 10) return undefined;
       return page.length + 1;
     },
+    refetchOnMount: false,
+    keepPreviousData: true,
   });
 
   if (getIssueQuery.isLoading) {
@@ -23,10 +51,41 @@ const IssueList: React.FC = () => {
     return <>Error occurred</>;
   }
 
-  const issues = getIssueQuery.data.pages.flat();
+  console.log(filter);
+
+  const issues = (() => {
+    if (filter === "all") return getIssueQuery.data.pages.flat();
+    return getIssueQuery.data.pages.flat().filter((issue) => {
+      return issue.label === filter;
+    });
+  })();
 
   return (
     <div className="w-4/5 max-w-4xl px-12">
+      <input
+        onChange={(e) => lazy(() => setQuery(e.target.value))}
+        className="w-full border px-2 py-1"
+      />
+      <select onChange={(e) => setFilter(e.target.value as Filter)}>
+        {filters.map((filter) => {
+          return (
+            <option value={filter} key={filter}>
+              {filter}
+            </option>
+          );
+        })}
+      </select>
+      <button
+        onClick={() => {
+          setOrder((prev) => {
+            if (prev === "asc") return "desc";
+            return "asc";
+          });
+        }}
+      >
+        Order
+      </button>
+
       <InfiniteScroll
         dataLength={issues.length}
         next={getIssueQuery.fetchNextPage}

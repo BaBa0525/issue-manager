@@ -6,8 +6,9 @@ import {
 } from "@/types/api";
 import { type Issue, type Label, type RawIssue } from "@/types/issue";
 import { getSession } from "next-auth/react";
-import { githubApi } from "./base";
+import { githubApi, githubSearchApi } from "./base";
 
+// TODO: ...
 const getLabel = (labels: Label[]) => {
   const openLabel = labels.filter((label) => label.name === "open");
   if (openLabel.length !== 0) return "open";
@@ -41,18 +42,25 @@ export const createIssue = async ({ title, body }: CreateIssue) => {
   return { newIssue: response.data };
 };
 
-export const getIssue = async ({ page = 1 }: GetIssue) => {
+export const getIssue = async ({
+  page = 1,
+  query = "",
+  order = "desc",
+}: GetIssue) => {
   const session = await getSession();
   if (!session) {
     throw Error("Not authenticated");
   }
 
   const searchParam = new URLSearchParams({
+    q: ["repo:BaBa0525/issue-manager", "state:open", query].join(" "),
     per_page: "10",
     page: page.toString(),
+    order,
+    sort: "created",
   });
 
-  const response = await githubApi.get<RawIssue[]>(
+  const response = await githubSearchApi.get<{ items: RawIssue[] }>(
     `/issues?${searchParam.toString()}`,
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
@@ -63,10 +71,13 @@ export const getIssue = async ({ page = 1 }: GetIssue) => {
 
   console.log(response.data);
 
-  return response.data.map((issue) => ({
-    ...issue,
-    label: getLabel(issue.labels),
-  }));
+  return response.data.items.map(
+    (issue) =>
+      ({
+        ...issue,
+        label: getLabel(issue.labels),
+      } as const)
+  );
 };
 
 export const updateIssue = async ({
@@ -96,7 +107,7 @@ export const updateIssue = async ({
     updatedIssue: {
       ...response.data,
       label: getLabel(response.data.labels),
-    },
+    } as const,
   };
 };
 
