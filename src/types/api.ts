@@ -13,6 +13,14 @@ export type CreateIssue = {
   body: string;
 };
 
+export type UpdateIssue = {
+  issue_number: string;
+};
+
+export type DeleteIssue = {
+  issue_number: string;
+};
+
 export type MockApi = {
   filter: "all";
 };
