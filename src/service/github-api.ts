@@ -1,8 +1,8 @@
 import {
-  DeleteIssue,
-  UpdateIssue,
   type CreateIssue,
+  type DeleteIssue,
   type GetIssue,
+  type UpdateIssue,
 } from "@/types/api";
 import { type Issue } from "@/types/issue";
 import { getSession } from "next-auth/react";
@@ -64,7 +64,7 @@ export const updateIssue = async ({
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<Issue[]>(
+  const response = await githubApi.patch<Issue>(
     `/issues/${issue_number}`,
     { body, title },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
@@ -76,7 +76,7 @@ export const updateIssue = async ({
 
   console.log(response.data);
 
-  return response.data;
+  return { updatedIssue: response.data };
 };
 
 export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
