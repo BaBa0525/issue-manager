@@ -4,9 +4,21 @@ import {
   type GetIssue,
   type UpdateIssue,
 } from "@/types/api";
-import { type Issue } from "@/types/issue";
+import { type Issue, type Label, type RawIssue } from "@/types/issue";
 import { getSession } from "next-auth/react";
 import { githubApi } from "./base";
+
+const getLabel = (labels: Label[]) => {
+  const openLabel = labels.filter((label) => label.name === "open");
+  if (openLabel.length !== 0) return "open";
+  const inProgressLabel = labels.filter(
+    (label) => label.name === "in progress"
+  );
+  if (inProgressLabel.length !== 0) return "in progress";
+  const doneLabel = labels.filter((label) => label.name === "done");
+  if (doneLabel.length !== 0) return "done";
+  return "open";
+};
 
 export const createIssue = async ({ title, body }: CreateIssue) => {
   const session = await getSession();
@@ -40,7 +52,7 @@ export const getIssue = async ({ page = 1 }: GetIssue) => {
     page: page.toString(),
   });
 
-  const response = await githubApi.get<Issue[]>(
+  const response = await githubApi.get<RawIssue[]>(
     `/issues?${searchParam.toString()}`,
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
@@ -51,22 +63,26 @@ export const getIssue = async ({ page = 1 }: GetIssue) => {
 
   console.log(response.data);
 
-  return response.data;
+  return response.data.map((issue) => ({
+    ...issue,
+    label: getLabel(issue.labels),
+  }));
 };
 
 export const updateIssue = async ({
   issue_number,
   title,
   body,
+  label,
 }: UpdateIssue) => {
   const session = await getSession();
   if (!session) {
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<Issue>(
+  const response = await githubApi.patch<RawIssue>(
     `/issues/${issue_number}`,
-    { body, title },
+    { body, title, labels: [label] },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
 
@@ -76,7 +92,12 @@ export const updateIssue = async ({
 
   console.log(response.data);
 
-  return { updatedIssue: response.data };
+  return {
+    updatedIssue: {
+      ...response.data,
+      label: getLabel(response.data.labels),
+    },
+  };
 };
 
 export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
@@ -85,7 +106,7 @@ export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<Issue>(
+  const response = await githubApi.patch<RawIssue>(
     `/issues/${issue_number}`,
     { state: "closed" },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
@@ -97,5 +118,10 @@ export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
 
   console.log(response.data);
 
-  return { deletedIssue: response.data };
+  return {
+    deletedIssue: {
+      ...response.data,
+      label: getLabel(response.data.labels),
+    },
+  };
 };

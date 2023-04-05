@@ -17,6 +17,7 @@ export type UpdateIssue = {
   issue_number: string;
   title: string;
   body: string;
+  label: "open" | "in progress" | "done";
 };
 
 export type DeleteIssue = {

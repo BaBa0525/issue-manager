@@ -29,16 +29,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
           <div className="flex flex-col gap-3">
             <h2 className="mt-3 text-2xl font-bold">{issue.title}</h2>
             <div>
-              {issue.labels.map((label) => {
-                return (
-                  <span
-                    key={label.id}
-                    className="mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700"
-                  >
-                    {label.name}
-                  </span>
-                );
-              })}
+              <span className="mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
+                {issue.label}
+              </span>
             </div>
 
             <ReactMarkdown className="prose lg:prose-lg">
@@ -59,6 +52,7 @@ type EditIssueCardProps = {
 const editSchema = z.object({
   title: z.string().min(1).max(100),
   body: z.string().min(1).max(1000),
+  label: z.enum(["open", "in progress", "done"]),
 });
 
 type EditSchema = z.infer<typeof editSchema>;
@@ -130,6 +124,7 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
     defaultValues: {
       title: issue.title,
       body: issue.body,
+      label: issue.label,
     },
   });
 
@@ -138,8 +133,11 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
       issue_number: issue.number,
       title: data.title,
       body: data.body,
+      label: data.label,
     });
   });
+
+  const allLabels = ["open", "in progress", "done"] as const;
 
   return (
     <>
@@ -158,16 +156,17 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
           disabled={updateIssueMutation.isLoading}
           className="disabled:opacity-30"
         >
-          {issue.labels.map((label) => {
-            return (
-              <span
-                key={label.id}
-                className="mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700"
+          <select {...register("label")}>
+            {allLabels.map((label) => (
+              <option
+                key={label}
+                className="mr-2 inline-block rounded-full bg-violet-400 px-3 py-1 text-sm font-semibold text-white"
+                value={label}
               >
-                {label.name}
-              </span>
-            );
-          })}
+                {label}
+              </option>
+            ))}
+          </select>
         </fieldset>
         <fieldset
           disabled={updateIssueMutation.isLoading}

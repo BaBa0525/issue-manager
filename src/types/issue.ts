@@ -1,4 +1,4 @@
-export type Issue = {
+export type RawIssue = {
   id: string;
   number: string;
   title: string;
@@ -6,7 +6,14 @@ export type Issue = {
   labels: Label[];
 };
 
-export type Label = {
+export type Issue = {
   id: string;
+  number: string;
+  title: string;
+  body: string;
+  label: "open" | "in progress" | "done";
+};
+
+export type Label = {
   name: string;
 };
