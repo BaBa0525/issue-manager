@@ -29,6 +29,7 @@ const Home: NextPage = () => {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<CreateSchema>({
     resolver: zodResolver(createSchema),
   });
@@ -43,7 +44,27 @@ const Home: NextPage = () => {
         "issues",
       ]);
 
-      const newIssue = { body, title, id: crypto.randomUUID() };
+      // const newIssue = { body, title, id: crypto.randomUUID() };
+      // queryClient.setQueryData(["issues"], {
+      //   ...previousIssues,
+      //   pages: previousIssues?.pages?.map((page, index) => {
+      //     if (index !== 0) {
+      //       return page;
+      //     }
+      //     return [newIssue, ...page];
+      //   }) ?? [[newIssue]],
+      // });
+
+      return { previousIssues };
+    },
+    onError: (err, newIssue, context) => {
+      queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
+    },
+    onSuccess: ({ newIssue }) => {
+      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
+        "issues",
+      ]);
+
       queryClient.setQueryData(["issues"], {
         ...previousIssues,
         pages: previousIssues?.pages?.map((page, index) => {
@@ -53,16 +74,12 @@ const Home: NextPage = () => {
           return [newIssue, ...page];
         }) ?? [[newIssue]],
       });
-
-      return { previousIssues };
-    },
-    onError: (err, newIssue, context) => {
-      queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
     },
   });
 
   const createSubmitHandler = async (data: CreateSchema) => {
     await createIssueMutation.mutateAsync(data);
+    reset();
   };
 
   if (status === "loading") {

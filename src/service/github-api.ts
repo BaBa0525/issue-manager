@@ -1,4 +1,9 @@
-import { UpdateIssue, type CreateIssue, type GetIssue } from "@/types/api";
+import {
+  DeleteIssue,
+  UpdateIssue,
+  type CreateIssue,
+  type GetIssue,
+} from "@/types/api";
 import { type Issue } from "@/types/issue";
 import { getSession } from "next-auth/react";
 import { githubApi } from "./base";
@@ -9,7 +14,7 @@ export const createIssue = async ({ title, body }: CreateIssue) => {
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.post(
+  const response = await githubApi.post<Issue>(
     "/issues",
     { title, body, labels: ["open"] },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
@@ -20,6 +25,8 @@ export const createIssue = async ({ title, body }: CreateIssue) => {
   }
 
   console.log(response.data);
+
+  return { newIssue: response.data };
 };
 
 export const getIssue = async ({ page = 1 }: GetIssue) => {
@@ -47,7 +54,11 @@ export const getIssue = async ({ page = 1 }: GetIssue) => {
   return response.data;
 };
 
-export const updateIssue = async ({ issue_number }: UpdateIssue) => {
+export const updateIssue = async ({
+  issue_number,
+  title,
+  body,
+}: UpdateIssue) => {
   const session = await getSession();
   if (!session) {
     throw Error("Not authenticated");
@@ -55,7 +66,7 @@ export const updateIssue = async ({ issue_number }: UpdateIssue) => {
 
   const response = await githubApi.patch<Issue[]>(
     `/issues/${issue_number}`,
-    { body: "updated", title: "updated" },
+    { body, title },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
 
@@ -68,7 +79,7 @@ export const updateIssue = async ({ issue_number }: UpdateIssue) => {
   return response.data;
 };
 
-export const deleteIssue = async ({ issue_number }: UpdateIssue) => {
+export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
   const session = await getSession();
   if (!session) {
     throw Error("Not authenticated");
