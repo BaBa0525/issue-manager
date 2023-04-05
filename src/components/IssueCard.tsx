@@ -25,7 +25,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
         <EditCard issue={issue} setIsEditing={setIsEditing} />
       ) : (
         <>
-          <OptionDropdown setIsEditing={setIsEditing} />
+          <OptionDropdown issue={issue} setIsEditing={setIsEditing} />
           <div className="flex flex-col gap-3">
             <h2 className="mt-3 text-2xl font-bold">{issue.title}</h2>
             <div>
@@ -39,19 +39,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
                   </span>
                 );
               })}
-            </div>
-
-            <div>
-              <button
-                className="border-2 border-black bg-gray-300"
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                onClick={async () => {
-                  await deleteIssue({ issue_number: issue.number });
-                  // void getIssueQuery.refetch();
-                }}
-              >
-                delete
-              </button>
             </div>
 
             <ReactMarkdown className="prose lg:prose-lg">
@@ -215,10 +202,34 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
 };
 
 type OptionDropdownProps = {
+  issue: Issue;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const OptionDropdown: React.FC<OptionDropdownProps> = ({ setIsEditing }) => {
+const OptionDropdown: React.FC<OptionDropdownProps> = ({
+  issue,
+  setIsEditing,
+}) => {
+  const queryClient = useQueryClient();
+  const deleteIssueMutation = useMutation({
+    mutationFn: deleteIssue,
+    onError: (err, deletedIssue, context) => {
+      // TODO: handle error
+    },
+    onSuccess({ deletedIssue }) {
+      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
+        "issues",
+      ]);
+
+      queryClient.setQueryData(["issues"], {
+        ...previousIssues,
+        pages: previousIssues?.pages?.map((page) => {
+          return page.filter((issue) => issue.number !== deletedIssue.number);
+        }),
+      });
+    },
+  });
+
   return (
     <div className="absolute top-2 right-3 w-56 text-right">
       <Menu as="div" className="relative inline-block text-left">
@@ -248,7 +259,14 @@ const OptionDropdown: React.FC<OptionDropdownProps> = ({ setIsEditing }) => {
                 </button>
               </Menu.Item>
               <Menu.Item as="li">
-                <button className="w-full rounded-md py-2 px-4 text-left hover:bg-navbar hover:text-white">
+                <button
+                  className="w-full rounded-md py-2 px-4 text-left hover:bg-navbar hover:text-white"
+                  onClick={() =>
+                    void deleteIssueMutation.mutateAsync({
+                      issue_number: issue.number,
+                    })
+                  }
+                >
                   Delete
                 </button>
               </Menu.Item>

@@ -85,7 +85,7 @@ export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<Issue[]>(
+  const response = await githubApi.patch<Issue>(
     `/issues/${issue_number}`,
     { state: "closed" },
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
@@ -97,5 +97,5 @@ export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
 
   console.log(response.data);
 
-  return response.data;
+  return { deletedIssue: response.data };
 };
