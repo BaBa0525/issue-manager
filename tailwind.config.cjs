@@ -8,6 +8,9 @@ module.exports = {
     extend: {
       colors: {
         navbar: "#0269a6",
+        button: {
+          create: "#1e883e",
+        },
         primary: {
           bg: "#f8fafc",
         },
