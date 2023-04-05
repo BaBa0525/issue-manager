@@ -5,7 +5,6 @@ import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 
 import "@/styles/globals.css";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const roboto_mono = Roboto_Mono({
   subsets: ["latin"],
@@ -25,7 +24,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <div className={roboto_mono.variable}>
           <Component {...pageProps} />
         </div>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>
     </SessionProvider>
   );
