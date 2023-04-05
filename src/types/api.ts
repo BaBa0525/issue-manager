@@ -15,6 +15,8 @@ export type CreateIssue = {
 
 export type UpdateIssue = {
   issue_number: string;
+  title: string;
+  body: string;
 };
 
 export type DeleteIssue = {
