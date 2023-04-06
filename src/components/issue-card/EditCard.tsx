@@ -29,17 +29,19 @@ export const EditCard: React.FC<EditIssueCardProps> = ({ setIsEditing }) => {
     defaultValues: {
       title: issue.title,
       body: issue.body,
-      label: issue.label,
+      label: issue.customLabel,
     },
   });
 
   const editSubmit = handleSubmit(async (data) => {
     await updateIssueMutation
       .mutateAsync({
-        issue_number: issue.number,
-        title: data.title,
-        body: data.body,
-        label: data.label,
+        update: {
+          title: data.title,
+          body: data.body,
+          customLabel: data.label,
+        },
+        oldIssue: issue,
       })
       .catch((err) => {
         if (err instanceof Error) return toast.error(err.message);

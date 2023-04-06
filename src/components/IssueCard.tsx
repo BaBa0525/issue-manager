@@ -19,7 +19,7 @@ export const IssueCard: React.FC = () => {
             <h2 className="mt-3 text-2xl font-bold">{issue.title}</h2>
             <div>
               <span className="mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
-                {issue.label}
+                {issue.customLabel}
               </span>
             </div>
 

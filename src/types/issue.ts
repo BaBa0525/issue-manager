@@ -1,17 +1,12 @@
-export type RawIssue = {
-  id: string;
-  number: string;
-  title: string;
-  body: string;
-  labels: Label[];
-};
+export type RawIssue = Omit<Issue, "customLabel">;
 
 export type Issue = {
   id: string;
   number: string;
   title: string;
   body: string;
-  label: "open" | "in progress" | "done";
+  customLabel: "open" | "in progress" | "done";
+  labels: Label[];
 };
 
 export type Label = {

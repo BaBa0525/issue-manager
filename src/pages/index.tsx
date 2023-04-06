@@ -5,7 +5,7 @@ import { CreateIssueForm } from "@/components/CreateIssueForm";
 import { IssueCard } from "@/components/IssueCard";
 import { useLazy } from "@/hooks/useLazy";
 import { Layout } from "@/layouts/Layout";
-import { getIssue } from "@/service/github-api";
+import { getIssue } from "@/service/github-api/getIssue";
 import { type Issue } from "@/types/issue";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createContext, useContext, useState } from "react";
@@ -30,19 +30,14 @@ export const useIssueContext = () => {
 const filters = ["all", "open", "in progress", "done"] as const;
 type Filter = (typeof filters)[number];
 
-const labelFilter = (filter: Filter, issues: Issue[]) => {
-  if (filter === "all") return issues;
-  return issues.filter((issue) => {
-    return issue.label === filter;
-  });
-};
-
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
+
   const [query, setQuery] = useState("");
-  const lazy = useLazy(500);
   const [order, setOrder] = useState<"asc" | "desc">("desc");
   const [filter, setFilter] = useState<Filter>("all");
+
+  const lazy = useLazy(500);
   const getIssueQuery = useInfiniteQuery({
     queryKey: ["issues", { query, order, filter }],
     queryFn: ({ pageParam = 1 }) =>
@@ -50,7 +45,7 @@ const Home: NextPage = () => {
         page: pageParam as number,
         query,
         order,
-        label: filter,
+        customLabel: filter,
       }),
     getNextPageParam: (lastPage, page) => {
       if (lastPage.length < 10) return undefined;
@@ -67,8 +62,16 @@ const Home: NextPage = () => {
   if (status === "unauthenticated") {
     return (
       <>
-        <p>Not signed in.</p>
-        <button onClick={() => void signIn("github")}>Sign in</button>
+        <Layout>
+          <div className="absolute top-1/2 translate-y-1/2">
+            <button
+              className="inline-block rounded-full bg-gray-200 px-6 py-3  text-2xl font-semibold text-gray-700"
+              onClick={() => void signIn("github")}
+            >
+              Sign in with GitHub
+            </button>
+          </div>
+        </Layout>
       </>
     );
   }
@@ -85,7 +88,7 @@ const Home: NextPage = () => {
     return <>Error occurred</>;
   }
 
-  const issues = labelFilter(filter, getIssueQuery.data.pages.flat());
+  const issues = getIssueQuery.data.pages.flat();
 
   return (
     <Layout>

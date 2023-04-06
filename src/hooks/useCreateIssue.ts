@@ -1,4 +1,4 @@
-import { createIssue } from "@/service/github-api";
+import { createIssue } from "@/service/github-api/createIssue";
 import { getIssuesData } from "@/utils/getIssuesData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -17,7 +17,7 @@ export const useCreateIssue = () => {
           if (index !== 0) {
             return page;
           }
-          return [{ ...newIssue, label: "open" }, ...page];
+          return [newIssue, ...page];
         }) ?? [[newIssue]],
       });
     },

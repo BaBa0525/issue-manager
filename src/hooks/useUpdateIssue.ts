@@ -1,4 +1,4 @@
-import { updateIssue } from "@/service/github-api";
+import { updateIssue } from "@/service/github-api/updateIssue";
 import type { Issue } from "@/types/issue";
 import type { InfiniteData } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

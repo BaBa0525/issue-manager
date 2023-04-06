@@ -1,4 +1,4 @@
-import { deleteIssue } from "@/service/github-api";
+import { deleteIssue } from "@/service/github-api/deleteIssue";
 import { getIssuesData } from "@/utils/getIssuesData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
