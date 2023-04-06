@@ -1,31 +1,24 @@
-import { deleteIssue, updateIssue } from "@/service/github-api";
-import { type Issue } from "@/types/issue";
+import { useDeleteIssue } from "@/hooks/useDeleteIssue";
+import { useUpdateIssue } from "@/hooks/useUpdateIssue";
+import { useIssueContext } from "@/pages";
 import { Menu, Transition } from "@headlessui/react";
-import {
-  useMutation,
-  useQueryClient,
-  type InfiniteData,
-} from "@tanstack/react-query";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AiOutlineMore } from "react-icons/ai";
 import ReactMarkdown from "react-markdown";
 import { z } from "zod";
 
-type IssueCardProps = {
-  issue: Issue;
-};
-
-export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
+export const IssueCard: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const { issue } = useIssueContext();
 
   return (
     <li key={issue.id} className="relative my-4 rounded-md bg-white px-12 py-2">
       {isEditing ? (
-        <EditCard issue={issue} setIsEditing={setIsEditing} />
+        <EditCard setIsEditing={setIsEditing} />
       ) : (
         <>
-          <OptionDropdown issue={issue} setIsEditing={setIsEditing} />
+          <OptionDropdown setIsEditing={setIsEditing} />
           <div className="flex flex-col gap-3">
             <h2 className="mt-3 text-2xl font-bold">{issue.title}</h2>
             <div>
@@ -45,7 +38,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue }) => {
 };
 
 type EditIssueCardProps = {
-  issue: Issue;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
@@ -57,64 +49,9 @@ const editSchema = z.object({
 
 type EditSchema = z.infer<typeof editSchema>;
 
-const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
-  const queryClient = useQueryClient();
-  const updateIssueMutation = useMutation({
-    mutationFn: updateIssue,
-    onMutate: async (updatedIssue) => {
-      await queryClient.cancelQueries(["issues"]);
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-      ]);
-
-      queryClient.setQueryData(["issues"], {
-        ...previousIssues,
-        pages: previousIssues?.pages?.map((page) => {
-          return page.map((issue) => {
-            if (issue.number === updatedIssue.issue_number) {
-              return {
-                ...issue,
-                ...updatedIssue,
-              };
-            }
-            return issue;
-          });
-        }),
-      });
-
-      return { previousIssues };
-    },
-
-    onError: (err, newIssue, context) => {
-      queryClient.setQueryData(["issues"], context?.previousIssues ?? []);
-      setIsEditing(false);
-    },
-
-    onSuccess: async ({ updatedIssue }) => {
-      await queryClient.invalidateQueries(["issues"]);
-
-      await queryClient.cancelQueries(["issues"]);
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-      ]);
-
-      queryClient.setQueryData(["issues"], {
-        ...previousIssues,
-        pages: previousIssues?.pages?.map((page) => {
-          return page.map((issue) => {
-            if (issue.number === updatedIssue.number) {
-              return {
-                ...issue,
-                ...updatedIssue,
-              };
-            }
-            return issue;
-          });
-        }),
-      });
-      setIsEditing(false);
-    },
-  });
+const EditCard: React.FC<EditIssueCardProps> = ({ setIsEditing }) => {
+  const { issue, ...queryKey } = useIssueContext();
+  const updateIssueMutation = useUpdateIssue(queryKey);
 
   const {
     register,
@@ -135,6 +72,7 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
       body: data.body,
       label: data.label,
     });
+    setIsEditing(false);
   });
 
   const allLabels = ["open", "in progress", "done"] as const;
@@ -201,33 +139,12 @@ const EditCard: React.FC<EditIssueCardProps> = ({ issue, setIsEditing }) => {
 };
 
 type OptionDropdownProps = {
-  issue: Issue;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const OptionDropdown: React.FC<OptionDropdownProps> = ({
-  issue,
-  setIsEditing,
-}) => {
-  const queryClient = useQueryClient();
-  const deleteIssueMutation = useMutation({
-    mutationFn: deleteIssue,
-    onError: (err, deletedIssue, context) => {
-      // TODO: handle error
-    },
-    onSuccess({ deletedIssue }) {
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-      ]);
-
-      queryClient.setQueryData(["issues"], {
-        ...previousIssues,
-        pages: previousIssues?.pages?.map((page) => {
-          return page.filter((issue) => issue.number !== deletedIssue.number);
-        }),
-      });
-    },
-  });
+const OptionDropdown: React.FC<OptionDropdownProps> = ({ setIsEditing }) => {
+  const { issue, ...queryKeys } = useIssueContext();
+  const deleteIssueMutation = useDeleteIssue(queryKeys);
 
   return (
     <div className="absolute top-2 right-3 w-56 text-right">

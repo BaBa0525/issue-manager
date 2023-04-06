@@ -8,9 +8,24 @@ import { Layout } from "@/layouts/Layout";
 import { getIssue } from "@/service/github-api";
 import { type Issue } from "@/types/issue";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import InfiniteScroll from "react-infinite-scroll-component";
+
+type IssueContextValue = {
+  issue: Issue;
+  filter: Filter;
+  query: string;
+  order: "asc" | "desc";
+};
+const IssueContext = createContext<IssueContextValue | null>(null);
+export const useIssueContext = () => {
+  const issue = useContext(IssueContext);
+  if (!issue) {
+    throw new Error("Issue context not found");
+  }
+  return issue;
+};
 
 const filters = ["all", "open", "in progress", "done"] as const;
 type Filter = (typeof filters)[number];
@@ -29,7 +44,7 @@ const Home: NextPage = () => {
   const [order, setOrder] = useState<"asc" | "desc">("desc");
   const [filter, setFilter] = useState<Filter>("all");
   const getIssueQuery = useInfiniteQuery({
-    queryKey: ["issues", query, order, filter],
+    queryKey: ["issues", { query, order, filter }],
     queryFn: ({ pageParam = 1 }) =>
       getIssue({
         page: pageParam as number,
@@ -126,9 +141,14 @@ const Home: NextPage = () => {
           }
         >
           <ul>
-            {issues.map((issue) => {
-              return <IssueCard issue={issue} key={issue.number} />;
-            })}
+            {issues.map((issue) => (
+              <IssueContext.Provider
+                key={issue.number}
+                value={{ issue, filter, query, order }}
+              >
+                <IssueCard />
+              </IssueContext.Provider>
+            ))}
           </ul>
         </InfiniteScroll>
       </div>
