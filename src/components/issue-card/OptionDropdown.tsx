@@ -7,13 +7,17 @@ import { AiOutlineMore } from "react-icons/ai";
 
 type OptionDropdownProps = {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsDeleting: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export const OptionDropdown: React.FC<OptionDropdownProps> = ({
   setIsEditing,
+  setIsDeleting,
 }) => {
-  const { issue, ...queryKeys } = useIssueContext();
-  const deleteIssueMutation = useDeleteIssue(queryKeys);
+  const { issue, ...queryKey } = useIssueContext();
+  const deleteIssueMutation = useDeleteIssue(queryKey);
+
+  setIsDeleting(deleteIssueMutation.isLoading);
 
   return (
     <div className="absolute top-2 right-3 w-56 text-right">
