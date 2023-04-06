@@ -8,9 +8,6 @@ export const useCreateIssue = () => {
 
   return useMutation({
     mutationFn: createIssue,
-    onError: (err, newIssue, context) => {
-      // TODO: Alert something
-    },
     onSuccess: ({ newIssue }) => {
       const previousIssues = getIssuesData(queryClient, queryKey);
 

@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
+import { Toaster } from "react-hot-toast";
 
 const roboto_mono = Roboto_Mono({
   subsets: ["latin"],
@@ -24,6 +25,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <div className={roboto_mono.variable}>
           <Component {...pageProps} />
         </div>
+        <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </SessionProvider>

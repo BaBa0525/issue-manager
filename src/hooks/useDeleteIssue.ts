@@ -14,9 +14,6 @@ export const useDeleteIssue = ({ query, filter, order }: UseDeleteIssue) => {
 
   return useMutation({
     mutationFn: deleteIssue,
-    onError: (err, deletedIssue, context) => {
-      // TODO: handle error
-    },
     onSuccess: ({ deletedIssue }) => {
       const previousIssues = getIssuesData(queryClient, queryKey);
 

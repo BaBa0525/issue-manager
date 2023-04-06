@@ -6,6 +6,7 @@ import {
   type UpdateIssue,
 } from "@/types/api";
 import { type Issue, type Label, type RawIssue } from "@/types/issue";
+import axios from "axios";
 import { getSession } from "next-auth/react";
 import { githubApi, githubSearchApi } from "./base";
 
@@ -28,11 +29,25 @@ export const createIssue = async ({ title, body }: CreateIssue) => {
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.post<Issue>(
-    "/issues",
-    { title, body, labels: ["open"] },
-    { headers: { Authorization: `Bearer ${session.accessToken}` } }
-  );
+  const response = await githubApi
+    .post<Issue>(
+      "/issues",
+      { title, body, labels: ["open"] },
+      { headers: { Authorization: `Bearer ${session.accessToken}` } }
+    )
+    .catch((error) => {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) {
+          throw new Error("You don't have permission to create issue.");
+        }
+        throw new Error(
+          `API error: ${error.response?.status || ""} ${
+            error.response?.statusText || ""
+          } `
+        );
+      }
+      throw new Error("Something went wrong.");
+    });
 
   if (!response.data) {
     throw Error(`API error: ${response.status} ${response.statusText}`);
@@ -54,21 +69,14 @@ export const getIssue = async ({
     throw Error("Not authenticated");
   }
 
-  console.log(label);
-
-  const q =
-    label === "all"
-      ? [
-          `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
-          "state:open",
-          query,
-        ].join(" ")
-      : [
-          `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
-          "state:open",
-          `label:${label}`,
-          query,
-        ].join(" ");
+  const q = [
+    `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
+    label === "all" ? "" : `label:"${label}"`,
+    "state:open",
+    query,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const searchParam = new URLSearchParams({
     q,
@@ -109,11 +117,25 @@ export const updateIssue = async ({
     throw Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<RawIssue>(
-    `/issues/${issue_number}`,
-    { body, title, labels: [label] },
-    { headers: { Authorization: `Bearer ${session.accessToken}` } }
-  );
+  const response = await githubApi
+    .patch<RawIssue>(
+      `/issues/${issue_number}`,
+      { body, title, labels: [label] },
+      { headers: { Authorization: `Bearer ${session.accessToken}` } }
+    )
+    .catch((error) => {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) {
+          throw new Error("You don't have permission to update this issue.");
+        }
+        throw new Error(
+          `API error: ${error.response?.status || ""} ${
+            error.response?.statusText || ""
+          } `
+        );
+      }
+      throw new Error("Something went wrong.");
+    });
 
   if (!response.data) {
     throw Error(`API error: ${response.status} ${response.statusText}`);
@@ -132,14 +154,28 @@ export const updateIssue = async ({
 export const deleteIssue = async ({ issue_number }: DeleteIssue) => {
   const session = await getSession();
   if (!session) {
-    throw Error("Not authenticated");
+    throw new Error("Not authenticated");
   }
 
-  const response = await githubApi.patch<RawIssue>(
-    `/issues/${issue_number}`,
-    { state: "closed" },
-    { headers: { Authorization: `Bearer ${session.accessToken}` } }
-  );
+  const response = await githubApi
+    .patch<RawIssue>(
+      `/issues/${issue_number}`,
+      { state: "closed" },
+      { headers: { Authorization: `Bearer ${session.accessToken}` } }
+    )
+    .catch((error) => {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) {
+          throw new Error("You don't have permission to delete this issue.");
+        }
+        throw new Error(
+          `API error: ${error.response?.status || ""} ${
+            error.response?.statusText || ""
+          } `
+        );
+      }
+      throw new Error("Something went wrong.");
+    });
 
   if (!response.data) {
     throw Error(`API error: ${response.status} ${response.statusText}`);

@@ -4,6 +4,7 @@ import { useCreateIssue } from "@/hooks/useCreateIssue";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -44,7 +45,10 @@ export const CreateIssueForm: React.FC<CreateIssueFormProps> = ({
   const createSubmitHandler = async (data: CreateSchema) => {
     setFilter("all");
     setOrder("desc");
-    await createIssueMutation.mutateAsync(data);
+    await createIssueMutation.mutateAsync(data).catch((err) => {
+      if (err instanceof Error) return toast.error(err.message);
+      toast.error("Something went wrong");
+    });
     reset();
     setIsEditing(false);
   };
