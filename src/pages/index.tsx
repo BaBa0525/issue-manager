@@ -56,7 +56,11 @@ const Home: NextPage = () => {
   });
 
   if (status === "loading") {
-    return <p>Hang on there...</p>;
+    return (
+      <Layout>
+        <Loading />
+      </Layout>
+    );
   }
 
   if (status === "unauthenticated") {
