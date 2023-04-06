@@ -2,6 +2,7 @@ import { updateIssue } from "@/service/github-api/updateIssue";
 import type { Issue } from "@/types/issue";
 import type { InfiniteData } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 export type UseUpdateIssue = {
   query: string;
@@ -34,6 +35,7 @@ export const useUpdateIssue = ({ query, filter, order }: UseUpdateIssue) => {
           });
         }),
       });
+      toast.success("Issue updated successfully");
     },
   });
 };

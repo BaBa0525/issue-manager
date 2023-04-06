@@ -1,6 +1,7 @@
 import { createIssue } from "@/service/github-api/createIssue";
 import { getIssuesData } from "@/utils/getIssuesData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 export const useCreateIssue = () => {
   const queryKey = ["issues", { query: "", order: "desc", filter: "all" }];
@@ -20,6 +21,7 @@ export const useCreateIssue = () => {
           return [newIssue, ...page];
         }) ?? [[newIssue]],
       });
+      toast.success("Issue created successfully");
     },
   });
 };

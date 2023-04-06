@@ -1,6 +1,7 @@
 import { deleteIssue } from "@/service/github-api/deleteIssue";
 import { getIssuesData } from "@/utils/getIssuesData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 export type UseDeleteIssue = {
   query: string;
@@ -23,6 +24,7 @@ export const useDeleteIssue = ({ query, filter, order }: UseDeleteIssue) => {
           return page.filter((issue) => issue.number !== deletedIssue.number);
         }),
       });
+      toast.success("Issue deleted successfully");
     },
   });
 };
