@@ -1,13 +1,7 @@
 import { signIn, useSession } from "next-auth/react";
 
-import { createIssue } from "@/service/github-api";
-import { type Issue } from "@/types/issue";
+import { useCreateIssue } from "@/hooks/useCreateIssue";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useMutation,
-  useQueryClient,
-  type InfiniteData,
-} from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -45,49 +39,7 @@ export const CreateIssueForm: React.FC<CreateIssueFormProps> = ({
     resolver: zodResolver(createSchema),
   });
 
-  const queryClient = useQueryClient();
-
-  const createIssueMutation = useMutation({
-    mutationFn: createIssue,
-    onMutate: async () => {
-      await queryClient.cancelQueries(["issues"]);
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-        "",
-        "desc",
-        "all",
-      ]);
-
-      return { previousIssues };
-    },
-    onError: (err, newIssue, context) => {
-      queryClient.setQueryData(
-        ["issues", "", "desc", "all"],
-        context?.previousIssues ?? []
-      );
-      // TODO: Alert something
-    },
-    onSuccess: ({ newIssue }) => {
-      const previousIssues = queryClient.getQueryData<InfiniteData<Issue[]>>([
-        "issues",
-        "",
-        "desc",
-        "all",
-      ]);
-
-      console.log(newIssue);
-
-      queryClient.setQueryData(["issues", "", "desc", "all"], {
-        ...previousIssues,
-        pages: previousIssues?.pages?.map((page, index) => {
-          if (index !== 0) {
-            return page;
-          }
-          return [{ ...newIssue, label: "open" }, ...page];
-        }) ?? [[newIssue]],
-      });
-    },
-  });
+  const createIssueMutation = useCreateIssue();
 
   const createSubmitHandler = async (data: CreateSchema) => {
     setFilter("all");
