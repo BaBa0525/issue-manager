@@ -45,7 +45,7 @@ const Home: NextPage = () => {
         page: pageParam as number,
         query,
         order,
-        customLabel: filter,
+        filter,
       }),
     getNextPageParam: (lastPage, page) => {
       if (lastPage.length < 10) return undefined;

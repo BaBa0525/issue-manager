@@ -9,7 +9,7 @@ export const getIssue = async ({
   page = 1,
   query = "",
   order = "desc",
-  customLabel: label = "all",
+  filter = "all",
 }: GetIssue) => {
   const session = await getSession();
   if (!session) {
@@ -18,7 +18,7 @@ export const getIssue = async ({
 
   const q = [
     `repo:${env.NEXT_PUBLIC_REPO_OWNER}/${env.NEXT_PUBLIC_REPO_NAME}`,
-    label === "all" ? "" : `label:"${label}"`,
+    ["all", "open"].includes(filter) ? "" : `label:"${filter}"`,
     "state:open",
     query,
   ]
@@ -44,11 +44,15 @@ export const getIssue = async ({
 
   console.log(response.data);
 
-  return response.data.items.map(
+  const issues = response.data.items.map(
     (issue) =>
       ({
         ...issue,
         customLabel: getCustomLabel(issue.labels),
       } as const)
   );
+
+  if (filter !== "open") return issues;
+
+  return issues.filter((issue) => issue.customLabel === filter);
 };
