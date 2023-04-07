@@ -44,12 +44,28 @@ Start the server
   pnpm dev
 ```
 
+## Notice
+
+To run this project, you will need to register GitHub OAuth app and specify the following fields correctly
+
+Homepage URL
+
+```
+http://localhost:3000
+```
+
+Authorization callback URL
+
+```
+http://localhost:3000/api/auth/callback/github
+```
+
 ## Tech Stack
 
 - [TypeScript](https://www.typescriptlang.org/)
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 
-## Copyright
+## Copy Right
 
 Loading gif: [Saugy from dtto friends](https://www.instagram.com/p/CpciDK3ATBa/)
