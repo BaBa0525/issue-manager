@@ -50,6 +50,6 @@ Start the server
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 
-## Copy Right
+## Copyright
 
 Loading gif: [Saugy from dtto friends](https://www.instagram.com/p/CpciDK3ATBa/)
