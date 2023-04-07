@@ -8,9 +8,11 @@ import { Layout } from "@/layouts/Layout";
 import { getIssue } from "@/service/github-api/getIssue";
 import { type Issue } from "@/types/issue";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import React, { createContext, useContext, useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import InfiniteScroll from "react-infinite-scroll-component";
+import saugy from "/public/saugy.gif";
 
 type IssueContextValue = {
   issue: Issue;
@@ -58,7 +60,16 @@ const Home: NextPage = () => {
   if (status === "loading") {
     return (
       <Layout>
-        <Loading />
+        <div className="absolute top-1/2 -translate-y-1/2">
+          <Image
+            src={saugy}
+            alt="saugy"
+            width={300}
+            height={300}
+            className="rounded-full"
+          />
+          {/* <Loading /> */}
+        </div>
       </Layout>
     );
   }
