@@ -68,7 +68,6 @@ const Home: NextPage = () => {
             height={300}
             className="rounded-full"
           />
-          {/* <Loading /> */}
         </div>
       </Layout>
     );
@@ -145,7 +144,13 @@ const Home: NextPage = () => {
 
         {getIssueQuery.isLoading ? (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2">
-            <Loading />
+            <Image
+              src={saugy}
+              alt="saugy"
+              width={300}
+              height={300}
+              className="rounded-full"
+            />
           </div>
         ) : (
           <InfiniteScroll
